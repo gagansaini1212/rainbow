@@ -6,16 +6,12 @@ import { Animated } from 'react-native';
 import TouchID from 'react-native-touch-id';
 import styled from 'styled-components';
 import BalanceManagerLogo from '../assets/balance-manager-logo.png';
-import { BlockButton, Button, LongPressButton } from '../components/buttons';
+import { Button, HoldToAuthorizeButton } from '../components/buttons';
 import { Centered, Column } from '../components/layout';
 import TransactionConfirmationSection from '../components/TransactionConfirmationSection';
 import MessageSigningSection from '../components/MessageSigningSection';
 import { Text } from '../components/text';
-import { borders, colors, fonts, padding, position } from '../styles';
-
-const SendButton = styled(BlockButton).attrs({ component: LongPressButton })`
-  ${padding(0, 0)}
-`;
+import { colors, position } from '../styles';
 
 const CancelButtonContainer = styled.View`
   bottom: 22;
@@ -50,31 +46,19 @@ const VenderLogoContainer = styled(Centered)`
   margin-bottom: 24;
 `;
 
-const VendorName = styled(Text).attrs({
-  size: 'h4',
-  weight: 'semibold',
-})`
-  color: ${colors.white};
-  letter-spacing: -0.2px;
-`;
-
 class TransactionConfirmationScreen extends Component {
   static propTypes = {
     dappName: PropTypes.string,
-    request: PropTypes.object,
-    requestType: PropTypes.string,
     onCancelTransaction: PropTypes.func,
     onConfirm: PropTypes.func,
+    request: PropTypes.object,
+    requestType: PropTypes.string,
   };
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      biometryType: null,
-      sendLongPressProgress: new Animated.Value(0),
-    };
-  };
+  state = {
+    biometryType: null,
+    sendLongPressProgress: new Animated.Value(0),
+  }
 
   componentDidMount() {
     TouchID.isSupported()
@@ -86,12 +70,16 @@ class TransactionConfirmationScreen extends Component {
       });
   }
 
+  componentWillUnmount() {
+    this.state.sendLongPressProgress.stopAnimation();
+  }
+
   onPressSend = () => {
     const { sendLongPressProgress } = this.state;
 
     Animated.timing(sendLongPressProgress, {
-      toValue: 100,
       duration: 800,
+      toValue: 100,
     }).start();
   };
 
@@ -99,8 +87,8 @@ class TransactionConfirmationScreen extends Component {
     const { sendLongPressProgress } = this.state;
 
     Animated.timing(sendLongPressProgress, {
-      toValue: 0,
       duration: (sendLongPressProgress._value / 100) * 800,
+      toValue: 0,
     }).start();
   };
 
@@ -109,36 +97,21 @@ class TransactionConfirmationScreen extends Component {
     const { sendLongPressProgress } = this.state;
 
     Animated.timing(sendLongPressProgress, {
-      toValue: 0,
       duration: (sendLongPressProgress._value / 100) * 800,
+      toValue: 0,
     }).start();
 
     await onConfirm(requestType);
   };
 
-  renderSendButton() {
-    const { requestType } = this.props;
-    const { biometryType, sendLongPressProgress } = this.state;
-    const leftIconName = biometryType === 'FaceID' ? 'faceid' : 'touchid';
-    const label = (requestType === 'message') ? 'Hold to Sign' : 'Hold to Send';
-    return (
-      <SendButton
-        disabled={false}
-        leftIconName={leftIconName}
-        onLongPress={this.onLongPressSend}
-        onPress={this.onPressSend}
-        onRelease={this.onReleaseSend}
-        rightIconName={'progress'}
-        rightIconProps={{
-          color: colors.alpha(colors.sendScreen.grey, 0.3),
-          progress: sendLongPressProgress,
-          progressColor: colors.white,
-        }}
-      >
-        {label}
-      </SendButton>
-    );
-  }
+  renderSendButton = () => (
+    <HoldToAuthorizeButton
+      isAuthorizing={this.state.isAuthorizing}
+      onLongPress={this.onLongPressSend}
+    >
+      {`Hold to ${(this.props.requestType === 'message') ? 'Sign' : 'Send'}`}
+    </HoldToAuthorizeButton>
+  )
 
   render = () => {
     const {
@@ -154,11 +127,18 @@ class TransactionConfirmationScreen extends Component {
           <VenderLogoContainer>
             <VendorLogo source={BalanceManagerLogo} />
           </VenderLogoContainer>
-          <VendorName>{dappName}</VendorName>
+          <Text
+            color="white"
+            letterSpacing="loose"
+            size="h4"
+            weight="semibold"
+          >
+            {dappName}
+          </Text>
           <TransactionType>{lang.t('wallet.transaction.request')}</TransactionType>
           <CancelButtonContainer>
             <Button
-              bgColor={colors.blueGreyMedium}
+              backgroundColor={colors.blueGreyMedium}
               onPress={onCancelTransaction}
               size="small"
               textProps={{ color: 'black', size: 'medium' }}
@@ -167,23 +147,28 @@ class TransactionConfirmationScreen extends Component {
             </Button>
           </CancelButtonContainer>
         </Masthead>
-        {requestType === 'message' ? (<MessageSigningSection
-          message={request}
-          sendButton={this.renderSendButton()}
-        />) :
-        (<TransactionConfirmationSection
-          asset={{
-            address: get(request, 'to'),
-            amount: get(request, 'value', '0.00'),
-            name: get(request, 'asset.name', 'No data'),
-            nativeAmountDisplay: get(request, 'nativeAmountDisplay'),
-            symbol: get(request, 'asset.symbol', 'N/A'),
-          }}
-          sendButton={this.renderSendButton()}
-        />)}
+        {(requestType === 'message')
+          ? (
+            <MessageSigningSection
+              message={request}
+              sendButton={this.renderSendButton()}
+            />
+          ) : (
+            <TransactionConfirmationSection
+              asset={{
+                address: get(request, 'to'),
+                amount: get(request, 'value', '0.00'),
+                name: get(request, 'asset.name', 'No data'),
+                nativeAmountDisplay: get(request, 'nativeAmountDisplay'),
+                symbol: get(request, 'asset.symbol', 'N/A'),
+              }}
+              sendButton={this.renderSendButton()}
+            />
+          )
+        }
       </Container>
-    )
+    );
   }
-};
+}
 
 export default TransactionConfirmationScreen;

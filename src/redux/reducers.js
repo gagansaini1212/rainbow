@@ -1,20 +1,31 @@
-import { account, send } from 'balance-common';
+import {
+  assets,
+  prices,
+  send,
+  settings,
+  transactions,
+} from '@rainbow-me/rainbow-common';
 import { combineReducers } from 'redux';
 
+import actionSheetManager from './actionSheetManager';
 import imageDimensionsCache from './imageDimensionsCache';
+import isWalletEmpty from './isWalletEmpty';
 import navigation from './navigation';
 import nonce from './nonce';
-import tracking from './tracking';
 import transactionsToApprove from './transactionsToApprove';
 import walletconnect from './walletconnect';
 
 export default combineReducers({
-  account,
+  actionSheetManager,
+  assets,
   imageDimensionsCache,
+  isWalletEmpty,
   navigation,
   nonce,
+  prices,
   send,
-  tracking,
+  settings,
+  transactions,
   transactionsToApprove,
   walletconnect,
 });

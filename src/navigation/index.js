@@ -12,7 +12,9 @@ function getActiveRouteName(navigationState) {
 
   const route = navigationState.routes[navigationState.index];
   // recursively dive into nested navigators
-  if (route.routes) return getActiveRouteName(route);
+  if (route.routes) {
+    return getActiveRouteName(route);
+  }
   return route.routeName;
 }
 
@@ -62,11 +64,12 @@ function getTransitionPosition() {
 function setTransitionPosition(position) {
   transitionPosition = position;
 }
+
 export default {
   getActiveRouteName,
   getTransitionPosition,
   handleAction,
   pauseNavigationActions,
   resumeNavigationActions,
-  setTransitionPosition
+  setTransitionPosition,
 };

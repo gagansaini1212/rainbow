@@ -1,12 +1,13 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { pure } from 'recompact';
 import styled from 'styled-components/primitives';
 import { padding } from '../../styles';
-import { ButtonPressAnimation } from '../buttons';
+import { ButtonPressAnimation } from '../animations';
 import { Flex } from '../layout';
 
 const Container = styled(Flex)`
-  ${padding(10)}
+  ${padding(10)};
 `;
 
 const HeaderButton = ({
@@ -28,4 +29,4 @@ HeaderButton.propTypes = {
   onPress: PropTypes.func.isRequired,
 };
 
-export default HeaderButton;
+export default pure(HeaderButton);

@@ -2,11 +2,13 @@ import chroma from 'chroma-js';
 import PropTypes from 'prop-types';
 
 const base = {
+  appleBlue: '#0E76FD', // 14, 118, 253
   black: '#000000', // '0, 0, 0'
   blue: '#657fe6', // '101, 127, 230'
   blueActive: '#5a71cc', // '90, 113, 204'
-  blueGreyDark: '#3c4252', // '60, 66, 82'
-  blueGreyLight: '#666A73', // '102, 106, 115'
+  blueGreyDark: '#3C4252', // '60, 66, 82'
+  blueGreyDarker: '#0F0F11', // '15, 15, 17'
+  blueGreyLight: '#A1A5AC', // '102, 106, 115'
   blueGreyLighter: '#888D96', // '136, 141, 150'
   blueGreyMedium: '#636875', // '99, 104, 117'
   blueGreyMediumLight: '#7b7f8a', // '123, 127, 138'
@@ -31,11 +33,13 @@ const base = {
   orange: '#f6851b', // '246, 133, 27'
   orangeLight: '#FFAF24', // '255, 175, 36'
   orangeMedium: '#FCA247', // '252, 162, 71'
+  paleBlue: '#5D9DF6',
+  placeholder: '#C4C6CB', // 196, 198, 203
   primaryBlue: '#5d9df6', // '93, 157, 246'
   primaryGreen: '#00a352', // '0, 163, 82'
   purple: '#32325d', // '50, 50, 93'
   red: '#d64b47', // '214, 75, 71'
-  rowDivider: '#f8f8f8', // '248, 248, 248'
+  rowDivider: '#f9f9fa', // '249, 249, 250'
   seaGreen: '#3aa686', // '58, 166, 134'
   skeleton: '#f7f7f8', // '247, 247, 248'
   teal: '#84f8da', // '132, 248, 218'
@@ -51,9 +55,9 @@ const assetIcon = {
 };
 
 const sendScreen = {
-  brightBlue: '#0e76fd', // '16, 118, 253'
-  lightGrey: '#fafafa', // '250, 250, 250'
+  brightBlue: base.appleBlue, // 14, 118, 253
   grey: '#d8d8d8', // '216, 216, 216'
+  lightGrey: '#fafafa', // '250, 250, 250'
 };
 
 assetIcon.random = () => {
@@ -62,8 +66,8 @@ assetIcon.random = () => {
 };
 
 const transparent = {
-  whiteTransparent: chroma(base.white).alpha(0.8), // '255, 255, 255'
   purpleTransparent: chroma(base.purple).alpha(0.7), // '50, 50, 93'
+  whiteTransparent: chroma(base.white).alpha(0.8), // '255, 255, 255'
 };
 
 const vendor = {
@@ -76,6 +80,9 @@ const vendor = {
 const buildRgba = (color, alpha) => `rgba(${chroma(color).rgb()}, ${alpha})`;
 
 const isColorLight = targetColor => (chroma(targetColor || base.white).luminance() > 0.5);
+
+const isHex = (color = '') => ((color.length >= 3) && (color.charAt(0) === '#'));
+const isRGB = (color = '') => (color.toLowerCase().substring(0, 3) === 'rgb');
 
 const getTextColorForBackground = (targetColor, textColors = {}) => {
   const {
@@ -100,9 +107,8 @@ const colors = {
 const getColorForString = (colorString = '') => {
   if (!colorString) return null;
 
-  const isHex = colorString.charAt(0) === '#';
-  const isRGB = colorString.toLowerCase().substring(0, 2) === 'rgb';
-  return (isHex || isRGB) ? colorString : colors[colorString];
+  const isValidColorString = isHex(colorString) || isRGB(colorString);
+  return isValidColorString ? colorString : colors[colorString];
 };
 
 export default {

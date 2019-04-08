@@ -1,54 +1,47 @@
-import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
-import createSwipeNavigator from '../navigation/navigators/createSwipeNavigator';
+import { createAppContainer, createStackNavigator, createMaterialTopTabNavigator } from 'react-navigation';
+import Navigation from '../navigation';
 import { buildTransitions, expanded, sheet } from '../navigation/transitions';
-import ActivityScreen from './ActivityScreen';
+import { updateTransitionProps } from '../redux/navigation';
+import store from '../redux/store';
+import { deviceUtils } from '../utils';
 import ExpandedAssetScreen from './ExpandedAssetScreen';
-import IntroScreen from './IntroScreen';
-import LoadingScreen from './LoadingScreen';
+import ImportSeedPhraseSheetWithData from './ImportSeedPhraseSheetWithData';
+import ProfileScreenWithData from './ProfileScreenWithData';
 import QRScannerScreenWithData from './QRScannerScreenWithData';
-import SendQRScannerScreenWithData from './SendQRScannerScreenWithData';
-import SendScreenWithData from './SendScreenWithData';
-import SettingsScreenWithData from './SettingsScreenWithData';
+import ReceiveModal from './ReceiveModal';
+// import ExamplePage from './ExamplePage';
+import SendSheetWithData from './SendSheetWithData';
+import SettingsModal from './SettingsModal';
 import TransactionConfirmationScreenWithData from './TransactionConfirmationScreenWithData';
 import WalletScreen from './WalletScreen';
-import { deviceUtils } from '../utils';
-import store from '../redux/store';
-import { updateTransitionProps } from '../redux/navigation';
 
-import Navigation from '../navigation';
+const onTransitionEnd = () => store.dispatch(updateTransitionProps({ isTransitioning: false }));
+const onTransitionStart = () => store.dispatch(updateTransitionProps({ isTransitioning: true }));
 
-const SwipeStack = createSwipeNavigator({
-  SettingsScreen: {
-    name: 'SettingsScreen',
-    screen: SettingsScreenWithData,
-    statusBarColor: 'dark-content',
+const SwipeStack = createMaterialTopTabNavigator({
+  ProfileScreen: {
+    name: 'ProfileScreen',
+    screen: ProfileScreenWithData,
   },
   WalletScreen: {
     name: 'WalletScreen',
     screen: WalletScreen,
-    statusBarColor: 'dark-content',
   },
+  // eslint-disable-next-line sort-keys
   QRScannerScreen: {
     name: 'QRScannerScreen',
     screen: QRScannerScreenWithData,
-    statusBarColor: 'light-content',
   },
 }, {
   headerMode: 'none',
   initialRouteName: 'WalletScreen',
-  onSwipeStart: () => Navigation.pauseNavigationActions(),
-  onSwipeEnd: (navigation) => Navigation.resumeNavigationActions(navigation),
+  mode: 'modal',
+  tabBarComponent: null,
 });
 
-const AppStack = createStackNavigator({
-  ActivityScreen: {
-    navigationOptions: {
-      effect: 'sheet',
-      gesturesEnabled: false // @NOTE: disabled the gesture for ActivityScreen due to conflict with the Notification Center gesture
-    },
-    screen: ActivityScreen,
-  },
+const MainNavigator = createStackNavigator({
   ConfirmRequest: TransactionConfirmationScreenWithData,
+  // ExamplePage: ExamplePage,
   ExpandedAssetScreen: {
     navigationOptions: {
       effect: 'expanded',
@@ -58,42 +51,33 @@ const AppStack = createStackNavigator({
     },
     screen: ExpandedAssetScreen,
   },
-  SendScreen: SendScreenWithData,
-  SendQRScannerScreen: SendQRScannerScreenWithData,
+  ImportSeedPhraseSheet: ImportSeedPhraseSheetWithData,
+  ReceiveModal: {
+    navigationOptions: {
+      effect: 'expanded',
+      gestureResponseDistance: {
+        vertical: deviceUtils.dimensions.height,
+      },
+    },
+    screen: ReceiveModal,
+  },
+  SendSheet: SendSheetWithData,
+  SettingsModal: {
+    navigationOptions: {
+      effect: 'expanded',
+      gesturesEnabled: false,
+    },
+    screen: SettingsModal,
+  },
   SwipeLayout: SwipeStack,
 }, {
   headerMode: 'none',
   initialRouteName: 'SwipeLayout',
   mode: 'modal',
+  onTransitionEnd,
+  onTransitionStart,
   transitionConfig: buildTransitions(Navigation, { expanded, sheet }),
-  cardStyle: {
-    backgroundColor: 'transparent',
-  },
-  onTransitionStart() {
-    store.dispatch(updateTransitionProps({ isTransitioning: true }));
-  },
-  onTransitionEnd() {
-    store.dispatch(updateTransitionProps({ isTransitioning: false }));
-  },
+  transparentCard: true,
 });
 
-const IntroStack = createStackNavigator({
-  IntroScreen,
-}, {
-  headerMode: 'none',
-  mode: 'card', // Horizontal gestures
-});
-
-export default createSwitchNavigator(
-  {
-    App: AppStack,
-    Intro: IntroStack,
-    Loading: LoadingScreen,
-  },
-  {
-    headerMode: 'none',
-    initialRouteName: 'Loading',
-    mode: 'modal',
-  },
-);
-
+export default createAppContainer(MainNavigator);

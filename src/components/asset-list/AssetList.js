@@ -18,19 +18,19 @@ const buildListBottomPadding = (safeAreaInset) => {
   return (safeAreaInset.bottom + fabSizeWithPadding) - ListFooter.height;
 };
 
-const renderAssetListHeader = ({ section }) => <AssetListHeader {...section} />;
+// eslint-disable-next-line react/prop-types
+const AssetListHeaderRenderer = ({ section }) => <AssetListHeader {...section} />;
 
 const AssetList = ({
   fetchData,
   hideHeader,
   isEmpty,
-  isLoading,
   safeAreaInset,
   sections,
   ...props
 }) => (
-  (isEmpty || isLoading) ? (
-    <AssetListSkeleton isLoading={isLoading} />
+  (isEmpty) ? (
+    <AssetListSkeleton />
   ) : (
     <SectionList
       contentContainerStyle={{
@@ -43,7 +43,7 @@ const AssetList = ({
       hideHeader={hideHeader}
       keyExtractor={assetListKeyExtractor}
       renderItem={AssetListItem}
-      renderSectionHeader={hideHeader ? null : renderAssetListHeader}
+      renderSectionHeader={hideHeader ? null : AssetListHeaderRenderer}
       sections={sections}
     />
   )
@@ -53,12 +53,11 @@ AssetList.propTypes = {
   fetchData: PropTypes.func.isRequired,
   hideHeader: PropTypes.bool,
   isEmpty: PropTypes.bool,
-  isLoading: PropTypes.bool,
   safeAreaInset: PropTypes.object,
   sections: PropTypes.arrayOf(PropTypes.object),
 };
 
 export default compose(
   withSafeAreaViewInsetValues,
-  onlyUpdateForKeys(['isEmpty', 'isLoading', 'sections']),
+  onlyUpdateForKeys(['isEmpty', 'sections']),
 )(AssetList);

@@ -1,22 +1,44 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { compose, onlyUpdateForPropTypes, withHandlers } from 'recompact';
+import {
+  compose,
+  pickProps,
+  pure,
+  withHandlers,
+} from 'recompact';
+import { withRequests } from '../../hoc';
 import Avatar from '../Avatar';
 import HeaderButton from './HeaderButton';
+import { Badge } from '../badge';
+import { Centered } from '../layout';
 
-const ProfileHeaderButton = ({ onPress }) => (
-  <HeaderButton onPress={onPress} transformOrigin="left">
-    <Avatar />
+const ProfileHeaderButton = ({ onPress, pendingRequestCount, ...props }) => (
+  <HeaderButton
+    onPress={onPress}
+    shouldRasterizeIOS
+    transformOrigin="left"
+  >
+    <Centered>
+      <Avatar size={32} />
+      {pendingRequestCount > 0 && (
+        <Badge
+          delay={2500}
+          value={pendingRequestCount}
+          zIndex={1}
+        />
+      )}
+    </Centered>
   </HeaderButton>
 );
 
 ProfileHeaderButton.propTypes = {
   onPress: PropTypes.func,
+  pendingRequestCount: PropTypes.number,
 };
 
 export default compose(
-  withHandlers({
-    onPress: ({ navigation }) => () => navigation.navigate('SettingsScreen'),
-  }),
-  onlyUpdateForPropTypes,
+  pure,
+  withRequests,
+  withHandlers({ onPress: ({ navigation }) => () => navigation.navigate('ProfileScreen') }),
+  pickProps(Object.keys(ProfileHeaderButton.propTypes)),
 )(ProfileHeaderButton);

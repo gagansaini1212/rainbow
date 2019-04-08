@@ -24,6 +24,7 @@ class SectionList extends PureComponent {
     onRefresh: PropTypes.func,
     renderItem: PropTypes.func,
     renderSectionFooter: PropTypes.func,
+    safeAreaInset: PropTypes.object,
     showSafeAreaInsetBottom: PropTypes.bool,
   }
 
@@ -38,11 +39,11 @@ class SectionList extends PureComponent {
 
   componentDidMount = () => {
     this.isCancelled = false;
-  };
+  }
 
   componentWillUnmount = () => {
     this.isCancelled = true;
-  };
+  }
 
   listRef = null
 
@@ -53,7 +54,9 @@ class SectionList extends PureComponent {
 
     this.setState({ isRefreshing: true });
     this.props.fetchData().then(() => {
-      !this.isCancelled && this.setState({ isRefreshing: false })
+      if (!this.isCancelled) {
+        this.setState({ isRefreshing: false });
+      }
     });
   }
 

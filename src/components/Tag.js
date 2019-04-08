@@ -1,7 +1,12 @@
-import { lowerCase, startCase, upperCase } from 'lodash';
+import { upperCase, upperFirst } from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { compose, hoistStatics, onlyUpdateForPropTypes, withProps } from 'recompact';
+import {
+  compose,
+  hoistStatics,
+  onlyUpdateForPropTypes,
+  withProps,
+} from 'recompact';
 import styled from 'styled-components/primitives';
 import { Centered, Column } from './layout';
 import { Text as TextElement } from './text';
@@ -62,7 +67,7 @@ Tag.propTypes = {
 
 const enhance = compose(
   withProps(({ text, title }) => ({
-    text: startCase(lowerCase(text)),
+    text: upperFirst(text),
     title: upperCase(title),
   })),
   onlyUpdateForPropTypes,

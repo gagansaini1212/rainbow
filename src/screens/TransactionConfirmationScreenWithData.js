@@ -1,10 +1,11 @@
-import { getTransactionCount, web3Instance } from 'balance-common';
 import lang from 'i18n-js';
 import { get } from 'lodash';
 import PropTypes from 'prop-types';
+import { getTransactionCount, web3Instance } from '@rainbow-me/rainbow-common';
 import React, { Component } from 'react';
 import { AlertIOS, StatusBar, Vibration } from 'react-native';
-import Piwik from 'react-native-matomo';
+import { withNavigationFocus } from 'react-navigation';
+import { compose } from 'recompact';
 import { withTransactionConfirmationScreen } from '../hoc';
 import { signMessage, sendTransaction } from '../model/wallet';
 import { walletConnectSendStatus } from '../model/walletconnect';
@@ -12,18 +13,17 @@ import TransactionConfirmationScreen from './TransactionConfirmationScreen';
 
 class TransactionConfirmationScreenWithData extends Component {
   static propTypes = {
-    accountUpdateHasPendingTransaction: PropTypes.func,
-    accountUpdateTransactions: PropTypes.func,
+    isFocused: PropTypes.bool.isRequired,
     navigation: PropTypes.any,
     removeTransaction: PropTypes.func,
     transactionCountNonce: PropTypes.number,
+    transactionsAddNewTransaction: PropTypes.func,
     updateTransactionCountNonce: PropTypes.func,
     walletConnectors: PropTypes.object,
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.isScreenActive && !prevProps.isScreenActive) {
-      Piwik.trackScreen('TxnConfirmScreen', 'TxnConfirmScreen');
+    if (this.props.isFocused && !prevProps.isFocused) {
     }
   }
 
@@ -51,14 +51,8 @@ class TransactionConfirmationScreenWithData extends Component {
     const txPayloadLatestNonce = { ...txPayload, nonce };
     const symbol = get(transactionDetails, 'transactionDisplayDetails.payload.asset.symbol', 'unknown');
     const address = get(transactionDetails, 'transactionDisplayDetails.payload.asset.address', '');
-    const trackingName = `${symbol}:${address}`;
     const transactionHash = await sendTransaction({
-      tracking: {
-        action: 'send-wc',
-        amount: get(transactionDetails, 'transactionDisplayDetails.payload.nativeAmount'),
-        name: trackingName,
-      },
-      transaction: txPayloadLatestNonce
+      transaction: txPayloadLatestNonce,
     });
 
     if (transactionHash) {
@@ -73,8 +67,7 @@ class TransactionConfirmationScreenWithData extends Component {
         to: get(transactionDetails, 'transactionDisplayDetails.payload.to'),
         value: get(transactionDetails, 'transactionDisplayDetails.payload.value'),
       };
-      this.props.accountUpdateHasPendingTransaction();
-      this.props.accountUpdateTransactions(txDetails);
+      this.props.transactionsAddNewTransaction(txDetails);
       this.props.removeTransaction(transactionDetails.callId);
       const walletConnector = this.props.walletConnectors[transactionDetails.sessionId];
       await walletConnectSendStatus(walletConnector, transactionDetails.callId, transactionHash);
@@ -90,7 +83,6 @@ class TransactionConfirmationScreenWithData extends Component {
     const flatFormatSignature = await signMessage(message);
 
     if (flatFormatSignature) {
-      const txDetails = { message };
       this.props.removeTransaction(transactionDetails.callId);
       const walletConnector = this.props.walletConnectors[transactionDetails.sessionId];
       await walletConnectSendStatus(walletConnector, transactionDetails.callId, flatFormatSignature);
@@ -135,8 +127,8 @@ class TransactionConfirmationScreenWithData extends Component {
         transactionDisplayDetails: {
           type,
           payload,
-        }
-      }
+        },
+      },
     } = this.props.navigation.state.params;
 
     return (
@@ -151,4 +143,7 @@ class TransactionConfirmationScreenWithData extends Component {
   }
 }
 
-export default withTransactionConfirmationScreen(TransactionConfirmationScreenWithData);
+export default compose(
+  withNavigationFocus,
+  withTransactionConfirmationScreen,
+)(TransactionConfirmationScreenWithData);

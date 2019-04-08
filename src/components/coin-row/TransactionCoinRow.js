@@ -1,27 +1,34 @@
 import { get } from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Fragment } from 'react';
-import { compose, mapProps, onlyUpdateForKeys, withHandlers } from 'recompact';
+import {
+  compose,
+  mapProps,
+  onlyUpdateForKeys,
+  withHandlers,
+} from 'recompact';
 import { Linking } from 'react-native';
-import { ButtonPressAnimation } from '../buttons';
-import { TransactionStatusTypes } from '../../helpers/transactions';
+import TransactionStatusTypes from '../../helpers/transactionStatusTypes';
 import { colors } from '../../styles';
+import { showActionSheetWithOptions } from '../../utils/actionsheet';
+import { ButtonPressAnimation } from '../animations';
+import { FlexItem, Row } from '../layout';
 import BalanceText from './BalanceText';
 import BottomRowText from './BottomRowText';
 import CoinName from './CoinName';
 import CoinRow from './CoinRow';
 import TransactionStatusBadge from './TransactionStatusBadge';
-import { showActionSheetWithOptions } from '../../utils/actionsheet';
 
 const rowRenderPropTypes = {
   balance: PropTypes.object,
+  item: PropTypes.object,
   name: PropTypes.string,
   native: PropTypes.object,
   onPressTransaction: PropTypes.func,
   status: PropTypes.oneOf(Object.values(TransactionStatusTypes)),
 };
 
-const bottomRowRender = ({ name, native, status }) => {
+const BottomRow = ({ name, native, status }) => {
   const nativeDisplay = get(native, 'balance.display');
 
   const isStatusSent = status === TransactionStatusTypes.sent;
@@ -29,63 +36,77 @@ const bottomRowRender = ({ name, native, status }) => {
 
   let balanceTextColor = colors.blueGreyLight;
   if (isStatusReceived) balanceTextColor = colors.primaryGreen;
-  if (!nativeDisplay) balanceTextColor = null;
 
   return (
-    <Fragment>
-      <CoinName>{name}</CoinName>
-      <BalanceText color={balanceTextColor}>
-        {(nativeDisplay && isStatusSent) ? '- ' : ''}
-        {nativeDisplay || ''}
-      </BalanceText>
-    </Fragment>
+    <Row align="center" justify="space-between">
+      <FlexItem flex={1}>
+        <CoinName>{name}</CoinName>
+      </FlexItem>
+      <FlexItem flex={0}>
+        <BalanceText color={balanceTextColor}>
+          {(nativeDisplay && isStatusSent) ? '- ' : ''}
+          {nativeDisplay || `${native.symbol}0.00`}
+        </BalanceText>
+      </FlexItem>
+    </Row>
   );
 };
 
-bottomRowRender.propTypes = rowRenderPropTypes;
+BottomRow.propTypes = rowRenderPropTypes;
 
-const topRowRender = ({ balance, status }) => (
+const TopRow = ({ balance, status }) => (
   <Fragment>
     <TransactionStatusBadge status={status} />
     <BottomRowText>{get(balance, 'display')}</BottomRowText>
   </Fragment>
 );
 
-topRowRender.propTypes = rowRenderPropTypes;
+TopRow.propTypes = rowRenderPropTypes;
 
 const TransactionCoinRow = ({ item, onPressTransaction, ...props }) => (
   <ButtonPressAnimation onPress={onPressTransaction} scaleTo={0.96}>
     <CoinRow
       {...item}
       {...props}
+      bottomRowRender={BottomRow}
       shouldRasterizeIOS={true}
-      bottomRowRender={bottomRowRender}
-      topRowRender={topRowRender}
+      topRowRender={TopRow}
     />
   </ButtonPressAnimation>
 );
 
+TransactionCoinRow.propTypes = rowRenderPropTypes;
+
 export default compose(
-  mapProps(({ item: { hash, originalHash, pending, ...item }, ...props }) => ({
-    originalHash,
+  mapProps(({
+    item: {
+      hash,
+      native,
+      pending,
+      ...item
+    },
+    ...props
+  }) => ({
+    hash,
     item,
+    native,
     pending,
     ...props,
   })),
   withHandlers({
-    onPressTransaction: ({ originalHash }) => () => {
-      if (originalHash) {
+    onPressTransaction: ({ hash }) => () => {
+      if (hash) {
         showActionSheetWithOptions({
           cancelButtonIndex: 1,
           options: ['View on Etherscan', 'Cancel'],
         }, (buttonIndex) => {
           if (buttonIndex === 0) {
-            const etherscanUrl = `https://etherscan.io/tx/${originalHash}`;
-            Linking.openURL(etherscanUrl);
+            const normalizedHash = hash.replace(/-.*/g, '');
+            Linking.openURL(`https://etherscan.io/tx/${normalizedHash}`);
           }
         });
       }
     },
   }),
-  onlyUpdateForKeys(['hash', 'pending']),
+  onlyUpdateForKeys(['hash', 'native', 'pending']),
 )(TransactionCoinRow);
