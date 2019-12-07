@@ -1,13 +1,16 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { withProps } from 'recompact';
+import { onlyUpdateForPropTypes, withProps } from 'recompact';
 import styled from 'styled-components/primitives';
 import { colors, padding } from '../../../styles';
-import { Column, Row } from '../../layout';
+import { ColumnWithMargins, Row } from '../../layout';
 import { Text, TruncatedText } from '../../text';
 import FloatingPanel from '../FloatingPanel';
 
-const Container = styled(Column)`
+const Container = styled(ColumnWithMargins).attrs({
+  justify: 'start',
+  margin: 4,
+})`
   ${padding(15, FloatingPanel.padding.x)};
   height: 75;
 `;
@@ -18,7 +21,7 @@ const HeaderRow = withProps({
 })(Row);
 
 const HeadingTextStyles = {
-  color: colors.blueGreyDark,
+  color: colors.dark,
   family: 'SFProText',
   size: 'larger',
   weight: 'semibold',
@@ -28,14 +31,14 @@ const Price = withProps(HeadingTextStyles)(Text);
 
 const Subtitle = withProps({
   color: colors.blueGreyDark,
-  family: 'SFMono',
+  family: 'SFProText',
   size: 'smedium',
-  weight: 'regular',
-})(Text);
+  weight: 'medium',
+})(TruncatedText);
 
 const Title = styled(TruncatedText).attrs(HeadingTextStyles)`
   flex: 1;
-  padding-right: ${FloatingPanel.padding.x * 1.25};
+  padding-right: ${({ paddingRight }) => paddingRight};
 `;
 
 const AssetPanelHeader = ({
@@ -44,12 +47,14 @@ const AssetPanelHeader = ({
   subtitle,
   title,
 }) => (
-  <Container justify="start">
-    <HeaderRow style={{ marginBottom: 4 }}>
-      <Title>{title}</Title>
+  <Container>
+    <HeaderRow>
+      <Title paddingRight={price ? FloatingPanel.padding.x * 1.25 : 0}>
+        {title}
+      </Title>
       {price && <Price>{price}</Price>}
     </HeaderRow>
-    <HeaderRow style={{ opacity: 0.6 }}>
+    <HeaderRow style={{ opacity: 0.5 }}>
       <Subtitle>{subtitle}</Subtitle>
       {price && <Subtitle>{priceLabel || 'Price'}</Subtitle>}
     </HeaderRow>
@@ -63,4 +68,4 @@ AssetPanelHeader.propTypes = {
   title: PropTypes.string,
 };
 
-export default AssetPanelHeader;
+export default onlyUpdateForPropTypes(AssetPanelHeader);

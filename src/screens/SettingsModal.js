@@ -15,6 +15,7 @@ import {
   BackupSection,
   CurrencySection,
   LanguageSection,
+  NetworkSection,
   SettingsSection,
 } from '../components/settings-menu';
 
@@ -34,6 +35,10 @@ const SettingsPages = {
   language: {
     component: LanguageSection,
     title: 'Language',
+  },
+  network: {
+    component: NetworkSection,
+    title: 'Network',
   },
 };
 
@@ -62,10 +67,12 @@ const SettingsModal = ({
           style={{ top: ModalHeader.height }}
         >
           <SettingsSection
+            onCloseModal={onCloseModal}
             onPressBackup={onPressSection(SettingsPages.backup)}
             onPressCurrency={onPressSection(SettingsPages.currency)}
             onPressImportSeedPhrase={onPressImportSeedPhrase}
             onPressLanguage={onPressSection(SettingsPages.language)}
+            onPressNetwork={onPressSection(SettingsPages.network)}
           />
           {component && createElement(component, { navigation })}
         </AnimatedPager>

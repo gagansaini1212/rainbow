@@ -1,7 +1,9 @@
 import { get } from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
+import { shouldUpdate } from 'recompact';
 import { css } from 'styled-components/primitives';
+import { buildAssetUniqueIdentifier } from '../../helpers/assets';
 import { colors, padding } from '../../styles';
 import { ButtonPressAnimation } from '../animations';
 import { Monospace } from '../text';
@@ -11,7 +13,7 @@ import CoinRow from './CoinRow';
 const selectedHeight = 78;
 
 const selectedStyles = css`
-  ${padding(17, 14, 19, 13)};
+  ${padding(17, 15, 19, 15)};
   height: ${selectedHeight};
 `;
 
@@ -45,7 +47,14 @@ TopRow.propTypes = {
   selected: PropTypes.bool,
 };
 
-const SendCoinRow = ({
+const enhance = shouldUpdate((props, nextProps) => {
+  const itemIdentifier = buildAssetUniqueIdentifier(props.item);
+  const nextItemIdentifier = buildAssetUniqueIdentifier(nextProps.item);
+
+  return itemIdentifier !== nextItemIdentifier;
+});
+
+const SendCoinRow = enhance(({
   item,
   onPress,
   selected,
@@ -61,7 +70,7 @@ const SendCoinRow = ({
       topRowRender={TopRow}
     />
   </ButtonPressAnimation>
-);
+));
 
 SendCoinRow.propTypes = {
   item: PropTypes.object,

@@ -1,14 +1,8 @@
-import { compact } from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {
-  compose,
-  mapProps,
-  onlyUpdateForKeys,
-  withProps,
-} from 'recompact';
-import { padding } from '../../styles';
-import { deviceUtils } from '../../utils';
+import { shouldUpdate } from 'recompact';
+import { padding, position } from '../../styles';
+import { deviceUtils, isNewValueForPath } from '../../utils';
 import { Row } from '../layout';
 import UniqueTokenCard from './UniqueTokenCard';
 
@@ -16,46 +10,44 @@ const CardMargin = 15;
 const RowPadding = 19;
 const CardSize = (deviceUtils.dimensions.width - (RowPadding * 2) - CardMargin) / 2;
 
-const UniqueTokenRow = ({
-  isFirstRow,
-  isLastRow,
-  items,
+const enhance = shouldUpdate((...props) => isNewValueForPath(...props, 'item.uniqueId'));
+
+const UniqueTokenRow = enhance(({
+  item,
   onPress,
+  onPressSend,
 }) => (
   <Row
     align="center"
     css={`
       ${padding(0, RowPadding)};
-      margin-bottom: ${CardMargin * (isLastRow ? 1.25 : 1)};
-      margin-top: ${isFirstRow ? CardMargin : 0};
+      margin-bottom: ${CardMargin};
+      margin-top: 0;
       width: 100%;
     `}
   >
-    {items.map((uniqueToken, itemIndex) => (
+    {item.map((uniqueToken, itemIndex) => (
       <UniqueTokenCard
+        {...position.sizeAsObject(CardSize)}
         item={uniqueToken}
-        key={uniqueToken.id}
-        size={CardSize}
-        style={{ marginLeft: (itemIndex >= 1) ? CardMargin : 0 }}
+        key={uniqueToken.uniqueId}
         onPress={onPress}
+        onPressSend={onPressSend}
+        style={{ marginLeft: (itemIndex >= 1) ? CardMargin : 0 }}
       />
     ))}
   </Row>
-);
+));
 
 UniqueTokenRow.propTypes = {
-  isFirstRow: PropTypes.bool,
-  isLastRow: PropTypes.bool,
-  items: PropTypes.array,
+  item: PropTypes.array,
   onPress: PropTypes.func,
+  onPressSend: PropTypes.func,
 };
 
-export default compose(
-  mapProps(({ item, ...props }) => ({ items: compact(item), ...props })),
-  withProps(({ index, items, section: { data } }) => ({
-    isFirstRow: index === 0,
-    isLastRow: index === (data.length - 1),
-    itemsCount: items.length,
-  })),
-  onlyUpdateForKeys(['items', 'itemsCount', 'isLastRow']),
-)(UniqueTokenRow);
+UniqueTokenRow.height = CardSize + CardMargin;
+UniqueTokenRow.cardSize = CardSize;
+UniqueTokenRow.cardMargin = CardMargin;
+UniqueTokenRow.rowPadding = RowPadding;
+
+export default UniqueTokenRow;

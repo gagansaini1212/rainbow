@@ -1,17 +1,17 @@
 import {
+  get,
   groupBy,
-  head,
   mapValues,
   values,
 } from 'lodash';
-import { sortList } from '@rainbow-me/rainbow-common';
 import { connect } from 'react-redux';
 import { compose, withProps } from 'recompact';
 import { createSelector } from 'reselect';
+import { sortList } from '../helpers/sortList';
 import {
-  getValidWalletConnectors,
-  removeWalletConnectorByDapp,
-  setWalletConnectors,
+  walletConnectClearTimestamp,
+  walletConnectDisconnectAllByDappName,
+  walletConnectUpdateTimestamp,
 } from '../redux/walletconnect';
 
 const mapStateToProps = ({ walletconnect: { walletConnectors } }) => ({ walletConnectors });
@@ -19,15 +19,14 @@ const mapStateToProps = ({ walletconnect: { walletConnectors } }) => ({ walletCo
 const walletConnectorsSelector = state => state.walletConnectors;
 
 const sortWalletConnectors = (walletConnectors) => {
-  const sortedWalletConnectors = sortList(Object.values(walletConnectors), 'expires');
-  const sortedWalletConnectorsByDappName = groupBy(sortedWalletConnectors, 'dappName');
-  const dappWalletConnector = mapValues(sortedWalletConnectorsByDappName, (connectors) => {
-    const firstElement = head(connectors);
-    return {
-      dappName: firstElement.dappName,
-      expires: firstElement.expires,
-    };
-  });
+  const sortedWalletConnectors = sortList(Object.values(walletConnectors), 'peerMeta.name');
+  const sortedWalletConnectorsByDappName = groupBy(sortedWalletConnectors, 'peerMeta.url');
+  const dappWalletConnector = mapValues(sortedWalletConnectorsByDappName, (connectors) => ({
+    dappIcon: get(connectors, '[0].peerMeta.icons[0]'),
+    dappName: get(connectors, '[0].peerMeta.name'),
+    dappUrl: get(connectors, '[0].peerMeta.url'),
+  }));
+
   return {
     sortedWalletConnectors,
     walletConnectorsByDappName: values(dappWalletConnector),
@@ -42,9 +41,9 @@ const walletConnectSelector = createSelector(
 
 export default Component => compose(
   connect(mapStateToProps, {
-    getValidWalletConnectors,
-    removeWalletConnectorByDapp,
-    setWalletConnectors,
+    walletConnectClearTimestamp,
+    walletConnectDisconnectAllByDappName,
+    walletConnectUpdateTimestamp,
   }),
   withProps(walletConnectSelector),
 )(Component);

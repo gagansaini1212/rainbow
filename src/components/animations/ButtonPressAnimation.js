@@ -26,7 +26,9 @@ export default class ButtonPressAnimation extends PureComponent {
     onPress: PropTypes.func,
     scaleTo: PropTypes.number,
     style: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+    tapRef: PropTypes.object,
     transformOrigin: directionPropType,
+    waitFor: PropTypes.any,
   }
 
   static defaultProps = {
@@ -58,7 +60,7 @@ export default class ButtonPressAnimation extends PureComponent {
     }
   }
 
-  handleStateChange = ({ nativeEvent: { state } }) => {
+  handleStateChange = ({ nativeEvent: { state, absoluteX, absoluteY } }) => {
     const {
       activeOpacity,
       enableHapticFeedback,
@@ -125,11 +127,18 @@ export default class ButtonPressAnimation extends PureComponent {
     Animated.parallel(animationsArray).start();
 
     if (enableHapticFeedback && state === State.ACTIVE) {
-      ReactNativeHapticFeedback.trigger('impactLight');
+      ReactNativeHapticFeedback.trigger('selection');
+    }
+
+    if (isActive) {
+      this.initPos = { absoluteX, absoluteY };
     }
 
     if (state === State.END && onPress) {
-      onPress();
+      // condition below covers issue when tap is simultaneous with pan
+      if (Math.abs(this.initPos.absoluteX - absoluteX) < 5 && Math.abs(this.initPos.absoluteY - absoluteY) < 5) {
+        onPress();
+      }
     }
   }
 
@@ -144,12 +153,26 @@ export default class ButtonPressAnimation extends PureComponent {
     });
   }
 
-  render() {
-    const { children, disabled, style } = this.props;
+  render = () => {
+    const {
+      children,
+      disabled,
+      style,
+      tapRef,
+      waitFor,
+    } = this.props;
 
     return (
-      <TapGestureHandler enabled={!disabled} onHandlerStateChange={this.handleStateChange}>
-        <Animated.View onLayout={this.handleLayout} style={[style, this.buildAnimationStyles()]}>
+      <TapGestureHandler
+        enabled={!disabled}
+        ref={tapRef}
+        onHandlerStateChange={this.handleStateChange}
+        waitFor={waitFor}
+      >
+        <Animated.View
+          onLayout={this.handleLayout}
+          style={[style, this.buildAnimationStyles()]}
+        >
           {children}
         </Animated.View>
       </TapGestureHandler>

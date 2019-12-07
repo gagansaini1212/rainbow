@@ -1,9 +1,10 @@
+import analytics from '@segment/analytics-react-native';
 import { get, keys, pickBy } from 'lodash';
 import PropTypes from 'prop-types';
-import { resources, supportedLanguages } from '@rainbow-me/rainbow-common';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withHandlers } from 'recompact';
 import { withAccountSettings } from '../../hoc';
+import { resources, supportedLanguages } from '../../languages';
 import { RadioList, RadioListItem } from '../radio-list';
 
 // Only show languages that have 'wallet' translations available.
@@ -17,6 +18,7 @@ const languageListItems = languagesWithWalletTranslations.map(code => ({
   value: code,
 }));
 
+// eslint-disable-next-line react/prop-types
 const renderLanguageListItem = ({ code, language, ...item }) => (
   <RadioListItem
     {...item}
@@ -43,8 +45,10 @@ LanguageSection.propTypes = {
 export default compose(
   withAccountSettings,
   withHandlers({
-    onSelectLanguage: ({ settingsChangeLanguage }) => (language) =>
-      settingsChangeLanguage(language),
+    onSelectLanguage: ({ settingsChangeLanguage }) => (language) => {
+      settingsChangeLanguage(language);
+      analytics.track('Changed language', { language });
+    },
   }),
   onlyUpdateForKeys(['language']),
 )(LanguageSection);

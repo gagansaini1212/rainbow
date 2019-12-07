@@ -1,6 +1,6 @@
-import { get } from 'lodash';
+import { compact, get } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { Fragment } from 'react';
+import React from 'react';
 import {
   compose,
   mapProps,
@@ -12,9 +12,9 @@ import TransactionStatusTypes from '../../helpers/transactionStatusTypes';
 import { colors } from '../../styles';
 import { showActionSheetWithOptions } from '../../utils/actionsheet';
 import { ButtonPressAnimation } from '../animations';
-import { FlexItem, Row } from '../layout';
-import BalanceText from './BalanceText';
+import { FlexItem, Row, RowWithMargins } from '../layout';
 import BottomRowText from './BottomRowText';
+import BalanceText from './BalanceText';
 import CoinName from './CoinName';
 import CoinRow from './CoinRow';
 import TransactionStatusBadge from './TransactionStatusBadge';
@@ -25,17 +25,23 @@ const rowRenderPropTypes = {
   name: PropTypes.string,
   native: PropTypes.object,
   onPressTransaction: PropTypes.func,
+  pending: PropTypes.bool,
   status: PropTypes.oneOf(Object.values(TransactionStatusTypes)),
 };
 
 const BottomRow = ({ name, native, status }) => {
-  const nativeDisplay = get(native, 'balance.display');
-
-  const isStatusSent = status === TransactionStatusTypes.sent;
-  const isStatusReceived = status === TransactionStatusTypes.received;
+  const isFailed = status === TransactionStatusTypes.failed;
+  const isReceived = status === TransactionStatusTypes.received;
+  const isSent = status === TransactionStatusTypes.sent;
 
   let balanceTextColor = colors.blueGreyLight;
-  if (isStatusReceived) balanceTextColor = colors.primaryGreen;
+  if (isReceived) balanceTextColor = colors.limeGreen;
+  if (isSent) balanceTextColor = colors.blueGreyDark;
+
+  const nativeDisplay = get(native, 'display');
+  const balanceText = nativeDisplay
+    ? compact([(isFailed || isSent) ? '-' : null, nativeDisplay]).join(' ')
+    : '';
 
   return (
     <Row align="center" justify="space-between">
@@ -44,8 +50,7 @@ const BottomRow = ({ name, native, status }) => {
       </FlexItem>
       <FlexItem flex={0}>
         <BalanceText color={balanceTextColor}>
-          {(nativeDisplay && isStatusSent) ? '- ' : ''}
-          {nativeDisplay || `${native.symbol}0.00`}
+          {balanceText}
         </BalanceText>
       </FlexItem>
     </Row>
@@ -54,11 +59,22 @@ const BottomRow = ({ name, native, status }) => {
 
 BottomRow.propTypes = rowRenderPropTypes;
 
-const TopRow = ({ balance, status }) => (
-  <Fragment>
-    <TransactionStatusBadge status={status} />
-    <BottomRowText>{get(balance, 'display')}</BottomRowText>
-  </Fragment>
+const TopRow = ({ balance, pending, status }) => (
+  <RowWithMargins
+    align="center"
+    justify="space-between"
+    margin={19}
+  >
+    <TransactionStatusBadge
+      pending={pending}
+      status={status}
+    />
+    <Row align="center" flex={1} justify="end">
+      <BottomRowText>
+        {get(balance, 'display', '')}
+      </BottomRowText>
+    </Row>
+  </RowWithMargins>
 );
 
 TopRow.propTypes = rowRenderPropTypes;

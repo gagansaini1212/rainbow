@@ -1,3 +1,4 @@
+import analytics from '@segment/analytics-react-native';
 import PropTypes from 'prop-types';
 import React from 'react';
 import FastImage from 'react-native-fast-image';
@@ -15,10 +16,6 @@ import { Button } from '../buttons';
 import { Centered, Column } from '../layout';
 import { Br, Monospace, Text } from '../text';
 import CopyTooltip from '../CopyTooltip';
-
-const Container = styled(Column)`
-  ${padding(80, 40, 0)};
-`;
 
 const Content = styled(Centered)`
   margin-bottom: 34;
@@ -39,7 +36,7 @@ const BackupSection = ({
   seedPhrase,
   toggleSeedPhrase,
 }) => (
-  <Container align="center" flex={1}>
+  <Column align="center" css={padding(80, 40, 0)} flex={1}>
     <FastImage
       source={SeedPhraseImageSource}
       style={position.sizeAsObject(70)}
@@ -49,7 +46,7 @@ const BackupSection = ({
       size="large"
       weight="semibold"
     >
-      Your Seed Phrase
+      Your Private Key
     </Text>
     <Content flex={0} seedPhrase={seedPhrase}>
       {seedPhrase
@@ -71,11 +68,11 @@ const BackupSection = ({
         ) : (
           <Text
             align="center"
-            color="blueGreyLighter"
+            color="blueGreyLightest"
             lineHeight="loose"
           >
             If you lose access to your device, the only way to restore your
-            funds is with your 12-word seed phrase.
+            funds is with your private key.
             <Br />
             <Br />
             Please store it in a safe place.
@@ -86,7 +83,7 @@ const BackupSection = ({
     <ToggleSeedPhraseButton onPress={toggleSeedPhrase}>
       {seedPhrase ? 'Hide' : 'Show'} Seed Phrase
     </ToggleSeedPhraseButton>
-  </Container>
+  </Column>
 );
 
 BackupSection.propTypes = {
@@ -100,10 +97,13 @@ export default compose(
   withState('seedPhrase', 'setSeedPhrase', null),
   withHandlers({ hideSeedPhrase: ({ setSeedPhrase }) => () => setSeedPhrase(null) }),
   withHandlers({
-    toggleSeedPhrase: ({ seedPhrase, hideSeedPhrase, setSeedPhrase }) => () => {
+    toggleSeedPhrase: ({ hideSeedPhrase, seedPhrase, setSeedPhrase }) => () => {
       if (!seedPhrase) {
         loadSeedPhraseFromKeychain()
-          .then(setSeedPhrase)
+          .then((keychainValue) => {
+            setSeedPhrase(keychainValue);
+            analytics.track('Viewed backup seed phrase text');
+          })
           .catch(hideSeedPhrase);
       } else {
         hideSeedPhrase();

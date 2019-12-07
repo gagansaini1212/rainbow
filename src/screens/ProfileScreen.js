@@ -13,7 +13,6 @@ import { colors, position } from '../styles';
 const ProfileScreen = ({
   accountAddress,
   blurOpacity,
-  hasPendingTransaction,
   isEmpty,
   nativeCurrency,
   navigation,
@@ -36,7 +35,6 @@ const ProfileScreen = ({
     </Header>
     <ActivityList
       accountAddress={accountAddress}
-      hasPendingTransaction={hasPendingTransaction}
       header={(
         <ProfileMasthead
           accountAddress={accountAddress}
@@ -44,6 +42,7 @@ const ProfileScreen = ({
           showBottomDivider={!isEmpty}
         />
       )}
+      isEmpty={isEmpty}
       nativeCurrency={nativeCurrency}
       requests={requests}
       transactions={transactions}
@@ -51,7 +50,7 @@ const ProfileScreen = ({
     />
     {isEmpty && <AddFundsInterstitial />}
     {showBlur && (
-      <FadeInAnimation duration={200} style={{ ...position.coverAsObject, zIndex: 1 }}>
+      <FadeInAnimation duration={315} style={{ ...position.coverAsObject, zIndex: 1 }}>
         <BlurOverlay
           backgroundColor={colors.alpha(colors.blueGreyDarker, 0.4)}
           blurType="light"
@@ -65,7 +64,6 @@ const ProfileScreen = ({
 ProfileScreen.propTypes = {
   accountAddress: PropTypes.string,
   blurOpacity: PropTypes.object,
-  hasPendingTransaction: PropTypes.bool,
   isEmpty: PropTypes.bool,
   nativeCurrency: PropTypes.string,
   navigation: PropTypes.object,

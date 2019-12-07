@@ -1,10 +1,10 @@
-import { isValidAddress } from '@rainbow-me/rainbow-common';
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
-import { Clipboard, InteractionManager } from 'react-native';
+import { Clipboard } from 'react-native';
+import Button from './Button';
 import { withAppState } from '../../hoc';
 import { colors } from '../../styles';
-import Button from './Button';
+import { isValidAddress } from '../../helpers/validators';
 
 class PasteAddressButton extends PureComponent {
   static propTypes = {
@@ -32,12 +32,10 @@ class PasteAddressButton extends PureComponent {
     }
   }
 
-  setClipboardContents = (clipboardContents) => {
-    InteractionManager.runAfterInteractions(() => {
-      if (isValidAddress(clipboardContents)) {
-        this.setState({ clipboardContents });
-      }
-    });
+  setClipboardContents = async (clipboardContents) => {
+    if (await isValidAddress(clipboardContents)) {
+      this.setState({ clipboardContents });
+    }
   }
 
   render() {

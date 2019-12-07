@@ -1,10 +1,19 @@
 import { compose, setDisplayName, withProps } from 'recompact';
+import { position } from '../../styles';
 import { ColumnWithMargins } from '../layout';
 
-export default compose(
+const FloatingPanelsMargin = 20;
+
+const FloatingPanels = compose(
   setDisplayName('FloatingPanels'),
   withProps({
-    margin: 20,
-    style: { width: '100%' },
+    justify: 'center',
+    margin: FloatingPanelsMargin,
+    pointerEvents: 'box-none',
+    style: position.sizeAsObject('100%'),
   }),
 )(ColumnWithMargins);
+
+FloatingPanels.margin = FloatingPanelsMargin;
+
+export default FloatingPanels;

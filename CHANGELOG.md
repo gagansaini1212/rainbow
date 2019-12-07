@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 ### Added
 
 ### Changed
+
+### Removed
+
+## [1.1.5-2](https://github.com/rainbow-me/rainbow/releases/tag/v1.1.5-2)
+### Changed
+* Bugfix for transaction history with null symbol
+
+## [1.1.4-1](https://github.com/rainbow-me/rainbow/releases/tag/v1.1.4-1)
+### Added
+* Support for importing private key and seed key
+* Collectibles grouped by families
+* Uniswap liquidity tokens
+
+### Changed
+* WalletConnect support for RPC methods
+
+## [1.1.0-3](https://github.com/rainbow-me/rainbow/releases/tag/v1.1.0-3)
+### Added
+* New data provider
+
+### Removed
+* Removed rainbow-common dependency
+
+## [1.0.0-11](https://github.com/rainbow-me/rainbow/releases/tag/v1.0.0-11)
+### Added
+* Analytics
+* Support for universal and deep linking for Safari mobile web browser
+
+### Changed
+* Updated coin icons
+* Bugfixes for older phones
+* Fix for white screen flash on launch
+* Support for larger NFT sizes
+
+## [0.4.0-15](https://github.com/rainbow-me/rainbow/releases/tag/v0.4.0-15)
+### Added
+* Support for sending NFTs
+* Support for sending to ENS addresses
+* Autorefresh for unique tokens
+
+### Changed
+* Upgrade to WalletConnect v1
 * Fix for app crashing when low ETH after having a previous wallet with enough ETH
 * Fix for push notification not showing up when app completely closed
 * Updated paging logic for transaction history

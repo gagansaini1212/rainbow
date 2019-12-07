@@ -4,45 +4,32 @@ import PropTypes from 'prop-types';
 const base = {
   appleBlue: '#0E76FD', // 14, 118, 253
   black: '#000000', // '0, 0, 0'
-  blue: '#657fe6', // '101, 127, 230'
-  blueActive: '#5a71cc', // '90, 113, 204'
   blueGreyDark: '#3C4252', // '60, 66, 82'
   blueGreyDarker: '#0F0F11', // '15, 15, 17'
-  blueGreyLight: '#A1A5AC', // '102, 106, 115'
-  blueGreyLighter: '#888D96', // '136, 141, 150'
+  blueGreyLight: '#A1A5AC',
+  blueGreyLightest: '#8A8E97', // '138, 142, 151'
+  blueGreyLigter: '#666A73', // '102, 106, 115'
   blueGreyMedium: '#636875', // '99, 104, 117'
   blueGreyMediumLight: '#7b7f8a', // '123, 127, 138'
-  blueHover: '#6c87f5', // '108, 135, 245'
-  bodyBackground: '#2c2f38', // '44, 47, 56'
-  brightBlue: '#5983FF', // '89, 131, 255'
-  brightGreen: '#12b878', // '18, 184, 120'
-  brightGreenHover: '#15c17f', // '21, 193, 127'
   dark: '#25292E', // '37, 41, 46'
   darkGrey: '#71778a', // '113, 119, 138'
-  darkText: '#2b2d33', // '43, 45, 51'
-  fadedBlue: '#6781e6', // '103, 129, 230'
-  gold: '#fabc2d', // '250, 188, 45'
   green: '#00994d', // '0, 153, 77'
   grey: '#a9adb9', // '169, 173, 185'
-  headerTitle: '#aaafbd', // '170, 175, 189'
-  lightBlue: '#c5f2ff', // '197, 242, 255'
-  lightestGrey: '#eee9e8', // '238, 233, 232'
-  lightGreen: '#54d192', // '84, 209, 146'
+  highlightBackground: '#F0F7FF', // '240, 247, 255'
+  lightestGrey: '#E9EBEF', // '238, 233, 232'
   lightGrey: '#f7f7f8', // '247, 247, 248'
+  limeGreen: '#3FCC18', // '58, 166, 134'
   mediumGrey: '#a1a5b3', // '161, 165, 179'
-  orange: '#f6851b', // '246, 133, 27'
-  orangeLight: '#FFAF24', // '255, 175, 36'
   orangeMedium: '#FCA247', // '252, 162, 71'
-  paleBlue: '#5D9DF6',
+  paleBlue: '#579DFF',
   placeholder: '#C4C6CB', // 196, 198, 203
   primaryBlue: '#5d9df6', // '93, 157, 246'
-  primaryGreen: '#00a352', // '0, 163, 82'
   purple: '#32325d', // '50, 50, 93'
+  purpleLight: '#FFD9FE', // '255, 217, 254'
   red: '#d64b47', // '214, 75, 71'
   rowDivider: '#f9f9fa', // '249, 249, 250'
-  seaGreen: '#3aa686', // '58, 166, 134'
-  skeleton: '#f7f7f8', // '247, 247, 248'
-  teal: '#84f8da', // '132, 248, 218'
+  shimmer: '#edeef1', // '237, 238, 241'
+  skeleton: '#f6f7f8', // '246, 247, 248'
   transparent: 'transparent',
   white: '#ffffff', // '255, 255, 255'
 };
@@ -63,11 +50,6 @@ const sendScreen = {
 assetIcon.random = () => {
   const assetIconColors = Object.values(assetIcon);
   return assetIconColors[Math.floor(Math.random() * assetIconColors.length)];
-};
-
-const transparent = {
-  purpleTransparent: chroma(base.purple).alpha(0.7), // '50, 50, 93'
-  whiteTransparent: chroma(base.white).alpha(0.8), // '255, 255, 255'
 };
 
 const vendor = {
@@ -93,9 +75,21 @@ const getTextColorForBackground = (targetColor, textColors = {}) => {
   return isColorLight(targetColor) ? dark : light;
 };
 
+const getFallbackTextColor = bg => colors.getTextColorForBackground(bg, {
+  dark: colors.blueGreyLight,
+  light: colors.white,
+});
+
+const transparent = {
+  blueGreyDarkTransparent: buildRgba(base.blueGreyDark, 0.6),
+  purpleTransparent: buildRgba(base.purple, 0.7), // '50, 50, 93'
+  whiteTransparent: buildRgba(base.white, 0.8), // '255, 255, 255'
+};
+
 const colors = {
   alpha: buildRgba,
   assetIcon,
+  getFallbackTextColor,
   getTextColorForBackground,
   isColorLight,
   sendScreen,

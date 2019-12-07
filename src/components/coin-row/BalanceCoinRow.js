@@ -2,6 +2,7 @@ import { get } from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Fragment } from 'react';
 import { compose, shouldUpdate, withHandlers } from 'recompact';
+import { buildAssetUniqueIdentifier } from '../../helpers/assets';
 import { withAccountSettings } from '../../hoc';
 import { colors } from '../../styles';
 import { isNewValueForPath } from '../../utils';
@@ -17,15 +18,16 @@ const formatPercentageString = percentString => (
     ? percentString.split('-').join('- ').split('%').join(' %')
     : '-'
 );
+
 const BottomRow = ({ balance, native }) => {
-  const percentChange = get(native, 'change.display');
+  const percentChange = get(native, 'change');
   const percentageChangeDisplay = formatPercentageString(percentChange);
   const isPositive = (percentChange && (percentageChangeDisplay.charAt(0) !== '-'));
 
   return (
     <Fragment>
       <BottomRowText>{balance.display}</BottomRowText>
-      <BottomRowText color={isPositive ? colors.seaGreen : null}>
+      <BottomRowText color={isPositive ? colors.limeGreen : null}>
         {percentageChangeDisplay}
       </BottomRowText>
     </Fragment>
@@ -63,10 +65,13 @@ TopRow.propTypes = {
 const BalanceCoinRow = ({
   item,
   onPress,
+  onPressSend,
   ...props
 }) => (
   <ButtonPressAnimation onPress={onPress} scaleTo={0.96}>
     <CoinRow
+      onPress={onPress}
+      onPressSend={onPressSend}
       {...item}
       {...props}
       bottomRowRender={BottomRow}
@@ -79,22 +84,30 @@ BalanceCoinRow.propTypes = {
   item: PropTypes.object,
   nativeCurrency: PropTypes.string.isRequired,
   onPress: PropTypes.func,
+  onPressSend: PropTypes.func,
 };
 
 export default compose(
   withAccountSettings,
-  shouldUpdate((...props) => {
-    const isNewNativeCurrency = isNewValueForPath(...props, 'nativeCurrency');
-    const isNewNativePrice = isNewValueForPath(...props, 'item.native.price.display');
-    const isNewTokenBalance = isNewValueForPath(...props, 'item.balance.amount');
-
-    return isNewNativeCurrency || isNewNativePrice || isNewTokenBalance;
-  }),
   withHandlers({
     onPress: ({ item, onPress }) => () => {
       if (onPress) {
         onPress(item);
       }
     },
+    onPressSend: ({ item, onPressSend }) => () => {
+      if (onPressSend) {
+        onPressSend(item);
+      }
+    },
+  }),
+  shouldUpdate((props, nextProps) => {
+    const itemIdentifier = buildAssetUniqueIdentifier(props.item);
+    const nextItemIdentifier = buildAssetUniqueIdentifier(nextProps.item);
+
+    const isNewItem = itemIdentifier !== nextItemIdentifier;
+    const isNewNativeCurrency = isNewValueForPath(props, nextProps, 'nativeCurrency');
+
+    return isNewItem || isNewNativeCurrency;
   }),
 )(BalanceCoinRow);

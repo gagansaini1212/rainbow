@@ -6,8 +6,8 @@ import {
 } from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
+import { onlyUpdateForKeys } from 'recompact';
 import styled, { css } from 'styled-components/primitives';
-import { Row } from './layout';
 import { borders, colors, position } from '../styles';
 
 const DefaultDividerSize = 2;
@@ -52,14 +52,16 @@ const BorderLine = styled.View`
   top: 0;
 `;
 
-const Container = styled(Row)`
-  background-color: ${colors.white};
+const Container = styled.View`
+  background-color: ${({ backgroundColor }) => (backgroundColor || colors.white)};
   flex-shrink: 0;
   height: ${({ horizontal, size }) => (horizontal ? size : '100%')};
   width: ${({ horizontal, size }) => (horizontal ? '100%' : size)};
 `;
 
-const Divider = ({
+const enhance = onlyUpdateForKeys(['color', 'inset']);
+
+const Divider = enhance(({
   color,
   horizontal,
   inset,
@@ -74,7 +76,7 @@ const Divider = ({
       inset={buildInsetFromProps(inset)}
     />
   </Container>
-);
+));
 
 Divider.propTypes = {
   color: PropTypes.string,

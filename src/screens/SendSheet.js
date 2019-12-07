@@ -1,10 +1,14 @@
-import { withAccountAssets } from '@rainbow-me/rainbow-common';
+import analytics from '@segment/analytics-react-native';
 import {
   get,
+  indexOf,
   isEmpty,
   isFunction,
   isString,
   map,
+  property,
+  sortBy,
+  upperFirst,
 } from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
@@ -21,29 +25,39 @@ import {
   SendHeader,
   SendTransactionSpeed,
 } from '../components/send';
-import { withAccountRefresh, withAccountSettings } from '../hoc';
+import {
+  withAccountData,
+  withAccountSettings,
+  withDataInit,
+  withUniqueTokens,
+} from '../hoc';
 import { colors } from '../styles';
-import { deviceUtils } from '../utils';
+import { deviceUtils, isNewValueForPath } from '../utils';
 import { showActionSheetWithOptions } from '../utils/actionsheet';
-import { uppercase } from '../utils/formatters';
 
 const Container = styled(Column)`
   background-color: ${colors.white};
   height: 100%;
 `;
 
-const formatGasSpeedItems = (gasPrices) => ([
-  { label: 'Cancel' },
-  ...map(gasPrices, (value, key) => {
-    const cost = get(value, 'txFee.native.value.display');
-    const time = get(value, 'estimatedTime.display');
+const formatGastSpeedItem = (value, key) => {
+  const cost = get(value, 'txFee.native.value.display');
+  const gwei = get(value, 'value.display');
+  const time = get(value, 'estimatedTime.display');
 
-    return {
-      label: `${uppercase(key, 7)}: ${cost}  ~${time.slice(0, -1)}`,
-      value: key,
-    };
-  }),
-]);
+  return {
+    gweiValue: gwei,
+    label: `${upperFirst(key)}: ${cost}   ~${time.slice(0, -1)}`,
+    value: key,
+  };
+};
+
+const labelOrder = ['slow', 'average', 'fast'];
+
+const formatGasSpeedItems = (gasPrices) => {
+  const gasItems = map(gasPrices, formatGastSpeedItem);
+  return sortBy(gasItems, ({ value }) => indexOf(labelOrder, value));
+};
 
 class SendSheet extends Component {
   static propTypes = {
@@ -60,6 +74,7 @@ class SendSheet extends Component {
     onSubmit: PropTypes.func,
     recipient: PropTypes.string,
     selected: PropTypes.object,
+    sendableUniqueTokens: PropTypes.arrayOf(PropTypes.object),
     sendClearFields: PropTypes.func,
     sendMaxBalance: PropTypes.func,
     sendUpdateAssetAmount: PropTypes.func,
@@ -67,7 +82,6 @@ class SendSheet extends Component {
     sendUpdateNativeAmount: PropTypes.func,
     sendUpdateRecipient: PropTypes.func,
     sendUpdateSelected: PropTypes.func,
-    uniqueTokens: PropTypes.arrayOf(PropTypes.object),
   }
 
   static defaultProps = {
@@ -107,8 +121,10 @@ class SendSheet extends Component {
       Keyboard.dismiss();
     }
 
-    if (prevProps.isValidAddress !== isValidAddress
-        || prevProps.selected !== selected) {
+    const isNewSelected = isNewValueForPath(this.props, prevProps, 'selected');
+    const isNewValidAddress = isNewValueForPath(this.props, prevProps, 'isValidAddress');
+
+    if (isNewValidAddress || isNewSelected) {
       let verticalGestureResponseDistance = 0;
 
       if (isValidAddress) {
@@ -128,12 +144,14 @@ class SendSheet extends Component {
   onChangeAssetAmount = (assetAmount) => {
     if (isString(assetAmount)) {
       this.props.sendUpdateAssetAmount(assetAmount);
+      analytics.track('Changed token input in Send flow');
     }
   }
 
   onChangeNativeAmount = (nativeAmount) => {
     if (isString(nativeAmount)) {
       this.props.sendUpdateNativeAmount(nativeAmount);
+      analytics.track('Changed native currency input in Send flow');
     }
   }
 
@@ -147,15 +165,23 @@ class SendSheet extends Component {
     }
   }
 
-  onPressTransactionSpeed = onSuccess => {
-    const options = formatGasSpeedItems(this.props.gasPrices);
+  onPressTransactionSpeed = (onSuccess) => {
+    const { gasPrices, sendUpdateGasPrice } = this.props;
+
+    const options = [
+      { label: 'Cancel' },
+      ...formatGasSpeedItems(gasPrices),
+    ];
 
     showActionSheetWithOptions({
       cancelButtonIndex: 0,
-      options: options.map(option => option.label),
+      options: options.map(property('label')),
     }, (buttonIndex) => {
       if (buttonIndex > 0) {
-        this.props.sendUpdateGasPrice(options[buttonIndex].value);
+        const selectedGasPriceItem = options[buttonIndex];
+
+        sendUpdateGasPrice(selectedGasPriceItem.value);
+        analytics.track('Updated Gas Price', { gasPrice: selectedGasPriceItem.gweiValue });
       }
 
       if (isFunction(onSuccess)) {
@@ -164,15 +190,20 @@ class SendSheet extends Component {
     });
   }
 
-  onResetAssetSelection = () => this.props.sendUpdateSelected('')
+  onResetAssetSelection = () => {
+    analytics.track('Reset asset selection in Send flow');
+    this.props.sendUpdateSelected({});
+  }
 
-  onSelectAsset = symbol => () => this.props.sendUpdateSelected(symbol)
+  onSelectAsset = asset => this.props.sendUpdateSelected(asset)
 
   sendTransaction = () => {
     const {
       assetAmount,
       navigation,
       onSubmit,
+      recipient,
+      selected,
       sendClearFields,
     } = this.props;
 
@@ -180,8 +211,15 @@ class SendSheet extends Component {
 
     return onSubmit().then(() => {
       this.setState({ isAuthorizing: false });
+      analytics.track('Sent transaction', {
+        assetName: selected.name,
+        assetType: selected.isNft ? 'unique_token' : 'token',
+        isRecepientENS: recipient.slice(-4).toLowerCase() === '.eth',
+      });
       sendClearFields();
       navigation.navigate('ProfileScreen');
+    }).catch(error => {
+      this.setState({ isAuthorizing: false });
     });
   }
 
@@ -194,11 +232,10 @@ class SendSheet extends Component {
       nativeCurrencySymbol,
       recipient,
       selected,
+      sendableUniqueTokens,
       sendUpdateRecipient,
-      uniqueTokens,
       ...props
     } = this.props;
-
     const showEmptyState = !isValidAddress;
     const showAssetList = isValidAddress && isEmpty(selected);
     const showAssetForm = isValidAddress && !isEmpty(selected);
@@ -218,7 +255,7 @@ class SendSheet extends Component {
                 allAssets={allAssets}
                 fetchData={fetchData}
                 onSelectAsset={this.onSelectAsset}
-                uniquetokens={uniqueTokens}
+                uniqueTokens={sendableUniqueTokens}
               />
             )}
             {showAssetForm && (
@@ -255,12 +292,11 @@ class SendSheet extends Component {
 }
 
 export default compose(
-  withAccountAssets,
+  withAccountData,
+  withUniqueTokens,
   withAccountSettings,
-  withAccountRefresh,
+  withDataInit,
   withHandlers({
-    fetchData: ({ refreshAccount }) => async () => {
-      await refreshAccount();
-    },
+    fetchData: ({ refreshAccountData }) => async () => refreshAccountData(),
   }),
 )(SendSheet);
